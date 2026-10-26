@@ -1,25 +1,26 @@
-# Canvas Grading Helper 0.1
+# Canvas Grading Helper 0.2 
 
-A tiny, local-only Chrome extension for UBC Canvas SpeedGrader.
+This unpacked Chrome extension adds three popup controls on UBC Canvas SpeedGrader quiz pages:
 
-## Installation
+- **Scroll to Update Scores:** Scrolls the embedded quiz iframe to the actual Canvas button.
+- **Save Scores (test):** Calls `.click()` on Canvas's `button.update-scores`, avoiding manual scrolling. This action will save changes to the real gradebook.
+- **Inspect buttons (no changes):** Returns read-only information about the save form and whether the next-student button exists; the form path has numeric identifiers redacted for testing purpose <3
 
-1. Unzip the downloaded package.
-2. Open `chrome://extensions` in Chrome.
-3. Enable **Developer mode**.
-4. Click **Load unpacked**.
-5. Select the extracted **canvas-grading-helper** directory (the folder containing `manifest.json`).
-6. Open the Canvas SpeedGrader page and click the extension icon (pin it if useful).
-7. Click **Scroll to Update Scores**.
+**There is intentionally no automatic Save & Next button yet.** We know where both elements are, but we still need to identify the Canvas save success signal before allowing automatic navigation. Stay tuned for the next update.
+
+## Install/Upgrade
+
+1. Extract the ZIP.
+2. Visit `chrome://extensions`, enable Developer mode, and use **Load unpacked** on the `canvas-grading-helper` folder.
+3. If v0.1 is installed, use the new extracted directory as a replacement: remove v0.1, load v0.2. (You can also overwrite the files in the original unpacked directory, then click the extension's refresh icon.)
+4. Open the UBC Canvas SpeedGrader page and pin/open the extension.
+5. For the first test, use an already-graded submission and verify Canvas saved the score after using **Save Scores (test)**.
 
 ## Safety and permissions
 
-- This version *only scrolls*: it never clicks Update Scores or changes grades.
-- It does not connect to external servers, log or transmit students' information, or use Canvas APIs.
-- It requests Chrome's `activeTab` and `scripting` permissions so it can run the scrolling function on the current tab when clicked.
-- It explicitly checks that the active tab is a UBC Canvas SpeedGrader page.
-- It searches same-origin frames because the quiz grading panel is embedded in an iframe.
+- This extension uses the `activeTab` and `scripting` permissions only, on explicit clicks.
+- It does not send, record, or export student data, or call Canvas APIs directly.
+- It only acts if the current URL matches `https://canvas.ubc.ca/courses/<number>/gradebook/speed_grader`.
+- It does not modify the scoring fields or advance the student.
+- It searches accessible same-origin iframes. If Canvas changes its UI, it may stop locating buttons.
 
-## Next step
-
-A **Save & Next Student** function needs separate testing though, to verify how the save completes, how errors are presented, and how next-student navigation works in the current SpeedGrader version. No guarantee of the update ;P

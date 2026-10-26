@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Canvas Grading Helper",
-  "version": "0.1.0",
-  "description": "Scroll to the Update Scores button in Canvas SpeedGrader, including same-origin embedded quiz frames.",
+  "version": "0.2.0",
+  "description": "Scroll to or click Canvas Update Scores from SpeedGrader without navigating away. Save & Next is awaiting verification.",
   "permissions": ["activeTab", "scripting"],
   "action": {
     "default_title": "Canvas Grading Helper",
