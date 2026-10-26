@@ -102,19 +102,95 @@
     return null;
   }
 
+  // Convert a button's rectangle into the coordinates of a containing
+  // document's viewport. Unlike frame.scrollIntoView(), this targets the
+  // actual button even when Canvas stretches the quiz iframe to many screens.
+  function rectInDocument(element, targetDocument) {
+    let win = element.ownerDocument.defaultView;
+    if (!win) return null;
+    const initial = element.getBoundingClientRect();
+    let top = initial.top;
+    let bottom = initial.bottom;
+    for (let depth = 0; depth < 8 && win.document !== targetDocument; depth++) {
+      let frame;
+      try { frame = win.frameElement; } catch (_) { return null; }
+      if (!frame) return null;
+      const frameRect = frame.getBoundingClientRect();
+      top += frameRect.top + frame.clientTop;
+      bottom += frameRect.top + frame.clientTop;
+      win = frame.ownerDocument.defaultView;
+      if (!win) return null;
+    }
+    return win.document === targetDocument ? { top, bottom, center: (top + bottom) / 2 } : null;
+  }
+
+  function scrollableAncestors(frame) {
+    const candidates = [];
+    for (let node = frame.parentElement; node; node = node.parentElement) {
+      const style = node.ownerDocument.defaultView.getComputedStyle(node);
+      if (node.scrollHeight > node.clientHeight + 2 &&
+          /(auto|scroll|overlay|hidden)/.test(style.overflowY)) candidates.push(node);
+    }
+    const page = frame.ownerDocument.scrollingElement;
+    if (page && page.scrollHeight > page.clientHeight + 2 && !candidates.includes(page)) {
+      candidates.push(page);
+    }
+    return candidates;
+  }
+
+  function bringToViewAcrossFrames(button) {
+    // Instant positioning avoids overlapping smooth-scroll animations in two
+    // independently scrolling documents. Never click the grading form here.
+    button.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'nearest' });
+
+    let win = button.ownerDocument.defaultView;
+    for (let depth = 0; depth < 8 && win && win !== window; depth++) {
+      let frame;
+      try { frame = win.frameElement; } catch (_) { break; }
+      if (!frame) break;
+      const parentDoc = frame.ownerDocument;
+      for (const scroller of scrollableAncestors(frame)) {
+        const target = rectInDocument(button, parentDoc);
+        if (!target) break;
+        const isPage = scroller === parentDoc.scrollingElement;
+        const viewport = isPage
+          ? { top: 0, height: parentDoc.defaultView.innerHeight }
+          : scroller.getBoundingClientRect();
+        const visibleHeight = isPage ? viewport.height : scroller.clientHeight;
+        const desiredCenter = viewport.top + (visibleHeight / 2);
+        const delta = target.center - desiredCenter;
+        if (Math.abs(delta) > 2) scroller.scrollTop += delta;
+      }
+      win = parentDoc.defaultView;
+    }
+  }
+
+  function updateButtonVisible(button) {
+    let win = button.ownerDocument.defaultView;
+    for (let depth = 0; depth < 8 && win; depth++) {
+      const rect = rectInDocument(button, win.document);
+      if (!rect || rect.bottom <= 0 || rect.top >= win.innerHeight) return false;
+      if (win === window) return true;
+      try { win = win.frameElement?.ownerDocument?.defaultView; }
+      catch (_) { return false; }
+    }
+    return false;
+  }
+
   function scrollToUpdate() {
     if (!validPage()) return status('Open a UBC Canvas SpeedGrader quiz page first.', 'warning');
     const found = findUpdateButton();
     if (!found) return status('Update Scores was not found. Is the quiz fully loaded?', 'warning');
-    found.button.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    let win = found.button.ownerDocument.defaultView;
-    while (win && win !== win.parent) {
-      try {
-        win.frameElement?.scrollIntoView({ block: 'nearest' });
-        win = win.parent;
-      } catch (_) { break; }
+    try {
+      bringToViewAcrossFrames(found.button);
+      if (updateButtonVisible(found.button)) {
+        status('Update Scores is in view.', 'success');
+      } else {
+        status('Could not bring Update Scores fully into view. Try again or use Save & Verify.', 'warning');
+      }
+    } catch (_) {
+      status('Could not scroll to Update Scores. No grades changed.', 'warning');
     }
-    status('Scrolled to Update Scores.', 'success');
   }
 
   function inspectButtons() {
@@ -278,7 +354,7 @@
       <section class="card" data-role="card" role="region" aria-label="Canvas Grading Helper">
         <header class="header">
           <div class="drag" data-role="drag" title="Drag to move this panel">
-            <div class="title">Canvas Grading Helper <span class="version">v0.4</span></div>
+            <div class="title">Canvas Grading Helper <span class="version">v0.4.1</span></div>
             <div class="subtitle">Drag here to move · Classic Quizzes</div>
           </div>
           <button class="close" type="button" data-role="close" aria-label="Close floating panel" title="Close">×</button>
