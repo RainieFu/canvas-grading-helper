@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Canvas Grading Helper",
-  "version": "0.2.0",
-  "description": "Scroll to or click Canvas Update Scores from SpeedGrader without navigating away. Save & Next is awaiting verification.",
+  "version": "0.3.0",
+  "description": "Scroll, save and verify, or safely attempt Save & Next on UBC Canvas SpeedGrader quiz submissions.",
   "permissions": ["activeTab", "scripting"],
   "action": {
     "default_title": "Canvas Grading Helper",
