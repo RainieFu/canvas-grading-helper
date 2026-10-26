@@ -1,11 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Canvas Grading Helper",
-  "version": "0.3.0",
-  "description": "Scroll, save and verify, or safely attempt Save & Next on UBC Canvas SpeedGrader quiz submissions.",
-  "permissions": ["activeTab", "scripting"],
+  "version": "0.4.0",
+  "description": "An optional floating SpeedGrader panel: scroll, save and verify, or save and move to the next student.",
+  "permissions": ["activeTab", "scripting", "storage"],
   "action": {
-    "default_title": "Canvas Grading Helper",
-    "default_popup": "popup.html"
+    "default_title": "Show or hide Canvas Grading Helper"
+  },
+  "background": {
+    "service_worker": "background.js"
   }
 }

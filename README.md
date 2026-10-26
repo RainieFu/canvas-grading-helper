@@ -1,74 +1,68 @@
-# Canvas Grading Helper 0.3
+# Canvas Grading Helper 0.4
 
-This version finally adds the **Save & Next Student** function!! No more scrolling all the way down just to save the grades and move on to the next submission :P
+v0.4 adds the **Floating Grading Panel**!! You no longer have to open the Chrome extension popup every time you finish grading a submission :P
 
-The extension now has four controls for UBC Canvas SpeedGrader:
+The panel sits directly on the UBC Canvas SpeedGrader page (Classic Quizzes) and includes the same three main functions from v0.3:
 
-- **Scroll to Update Scores:** Scrolls the embedded quiz iframe to the actual Canvas Update Scores button. Same function as v0.1.
-- **Save & Verify:** Clicks Canvas's Update Scores button and checks whether the save was successful. Stays on the current student.
-- **Save & Next Student (beta):** Saves the grades, waits for Canvas to confirm the update, and then automatically clicks the Next Student button.
-- **Inspect buttons (no changes):** Checks whether the grading controls are available and returns basic information for debugging. Does not change anything.
+- **Scroll to Update Scores:** Scrolls the quiz iframe to Canvas's actual Update Scores button. Still here if you prefer saving manually!
+- **Save & Verify:** Clicks Canvas's Update Scores button, waits for the `score_updated=1` confirmation, and stays on the current student.
+- **Save & Next Student:** Saves and verifies the update, then clicks Canvas's Next Student button. No automatic advance without the expected confirmation.
 
-**Both Save & Verify and Save & Next Student have been tested successfully on UBC Canvas!** The next student's submission loaded correctly, and the previous student's grades and comments remained saved <3
+**Inspect buttons** is also available in the floating panel for debugging purposes. It does not change grades.
+
+## What's new? (admit it, this is cool)
+
+1. Click the **extension icon once** while you're on SpeedGrader to open the floating panel. There is no longer a separate popup.
+2. The panel stays visible as you move between submissions, including ordinary same-origin SpeedGrader reloads in that tab.
+3. **Drag the header** to put it somewhere that doesn't block the exam or scoring fields. Its position is remembered for that tab during the Chrome session.
+4. Click the **×** on the panel to close it. Click the extension icon to reopen it whenever you want.
+
+Note: The panel follows the **same tab** while you're working on UBC SpeedGrader. A new tab, browser restart, or navigation away from the Canvas site may require clicking the extension icon again.
 
 ## How does Save & Next work?
 
-The extension uses Canvas's own Update Scores button rather than making separate API requests.
+The actual grading logic is unchanged from v0.3:
 
-1. Find the Update Scores button inside the quiz iframe.
-2. Click the button to submit the grades and comments.
-3. Wait for Canvas to finish processing the update.
-4. Check for the `score_updated=1` confirmation in the quiz iframe's redirected URL.
-5. If the save is confirmed, click the Next Student button in SpeedGrader.
+1. Find `button.update-scores` in the embedded quiz iframe.
+2. Click that button to submit scores/comments through Canvas's own grading form.
+3. Listen for the quiz iframe to finish loading.
+4. Check the redirected URL for the matching quiz's `score_updated=1` confirmation.
+5. **Only after confirming the save**, click `#next-student-button` in SpeedGrader.
 
-**If the save cannot be confirmed, the extension will NOT automatically move to the next student.** However, this does not necessarily mean the save failed. Check Canvas manually before trying again.
+If the confirmation isn't detected, the extension stays on the current student. This doesn't necessarily mean Canvas failed to save: check the actual grades and comments before trying again.
 
-The confirmation indicates that Canvas processed the score update, but it does not independently verify every individual grade or comment.
+The success signal confirms that Canvas processed the update, **not** that every individual score or comment has been independently audited. Grading is still up to the user <3
 
 ## Install/Upgrade
 
-1. Extract the ZIP file.
-2. Open `chrome://extensions` in Chrome and enable **Developer mode**.
-3. Click **Load unpacked** and select the extracted `canvas-grading-helper` folder (the one containing `manifest.json`).
-4. If an older version is already installed, remove it and load the new version. Alternatively, replace the files in the existing extension directory and click Reload.
-5. Refresh the UBC Canvas SpeedGrader page.
-6. Open the extension popup and select whichever function you need!
+1. Download and extract the v0.4 ZIP file.
+2. Open `chrome://extensions` and enable **Developer mode**.
+3. If v0.3 is installed, either remove the older unpacked extension and select **Load unpacked** for the new `canvas-grading-helper` folder, **or** replace its files in the same folder and click **Reload** on the extension card. The folder should contain `manifest.json`.
+4. Refresh your UBC Canvas SpeedGrader tab.
+5. Pin the extension if useful. **Click its toolbar icon once** to show the floating panel.
+6. Try **Scroll to Update Scores** first, then test **Save & Verify** and **Save & Next Student** on an already-graded submission before using v0.4 in active grading.
 
-For the first test, use an already-graded submission to make sure the scores and comments are saved correctly before trying Save & Next Student on active grading work.
+Clicking the extension icon now **shows/hides the floating panel directly**; it will not open the old v0.3 popup. Inspect Buttons moved into the floating panel.
 
 ## Safety and permissions
 
-- The extension only requests Chrome's `activeTab` and `scripting` permissions. It runs when the user explicitly clicks a function.
-- It does not connect to external servers, store or transmit student information, or make independent Canvas API requests.
-- It only works on UBC Canvas SpeedGrader pages matching `https://canvas.ubc.ca/courses/<number>/gradebook/speed_grader`.
-- It uses Canvas's existing grading and navigation buttons. It does not change individual scoring fields or make grading decisions.
-- It searches accessible same-origin iframes because the quiz grading panel is embedded inside one.
-- Save & Next Student only advances after detecting Canvas's expected save confirmation. If the confirmation is missing or the Next Student button is unavailable, it will not automatically navigate.
-- The extension is designed and tested for the current UBC Canvas Classic Quizzes interface. Changes to Canvas may break the selectors or save verification.
-
-Please still double-check the grades and comments, especially when using Save & Next Student for the first time. We tested it, but no guarantee it will survive every future Canvas update ;P
+- Chrome permissions: `activeTab`, `scripting`, and `storage`. The new `storage` permission keeps only the panel's open/closed state and its position **for the current browser session**. No grades, comments, names, student IDs, or submission content are stored.
+- The extension does not connect to external servers, export or log student information, or call Canvas APIs independently.
+- It only acts on `https://canvas.ubc.ca/courses/<number>/gradebook/speed_grader` pages after the extension icon has been clicked. It does not request permanent site access.
+- Saving uses Canvas's own Update Scores button; the extension does not assign marks or edit grading fields.
+- While saving, the panel disables its controls to avoid duplicate actions. It also won't close halfway through an in-progress save.
+- Save & Next Student won't advance if confirmation is missing, the submission/page appears to have changed, or the Next Student button is unavailable.
+- The extension is intended for the current UBC Canvas **Classic Quizzes** SpeedGrader interface. Canvas UI changes can break the selectors or confirmation check.
 
 ## Next step
 
-**v0.4 — Floating Grading Panel**
+Question Navigation (maybe maybe?)
 
-The current version works, but opening the Chrome extension popup every time is still an extra step (ugh!). The next goal is to make the workflow even smoother with a small floating control panel directly on the SpeedGrader page.
+Another annoying part of grading long exams is having to scroll through every student's submission to find the questions we're assigned to grade.
 
-The idea is:
+Some ideas for the next version:
+- Let users enter the question numbers they're responsible for grading.
+- Add a Jump to Question function to the floating panel.
+- Automatically scroll to the first assigned question after Save & Next Student, so the next submission is ready for grading right away.
 
-1. Click the extension icon once to open the floating panel.
-2. The panel stays visible while grading and moving between student submissions.
-3. Keep all three main controls available (with cleaner layout):
-   - **Scroll to Update Scores**
-   - **Save & Verify**
-   - **Save & Next Student**
-4. Allow users to drag the panel somewhere convenient so it doesn't cover the exam or grading fields.
-5. Add a close button to dismiss the panel whenever it is no longer needed. Users can reopen it through the extension icon.
-
-Ideally, the panel should remain available throughout the SpeedGrader session, including after moving to the next student, without needing to reopen the extension every time.
-
-The existing **Inspect buttons** function can stay in the extension popup for debugging purposes.
-
-The goal is to make grading faster with fewer unnecessary clicks, while keeping the actual grading decisions and control over saving in the grader's hands.
-
-Stay tuned for v0.4! :)
+Maybe add Previous/Next Assigned Question buttons to make navigating between assigned questions easier.
